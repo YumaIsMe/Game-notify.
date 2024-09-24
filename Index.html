@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Roblox Visit Notifier</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        body {
+            padding: 20px;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-900">
+    <div class="container mx-auto">
+        <h1 class="text-2xl font-bold mb-4">Roblox Visit Notifier</h1>
+        <div id="current-visits" class="text-lg mb-2">Current Visits: 0</div>
+        <div id="notifications" class="mt-4"></div>
+    </div>
+
+    <script>
+        const universeId = 903807016;
+        const notificationThresholds = [999500000, 999600000, 999700000, 999800000, 999900000];
+        const notifications = new Set();
+
+        async function getGameData() {
+            const url = `https://games.roblox.com/v1/games?universeIds=${universeId}`;
+            const response = await fetch(url);
+            if (response.ok) {
+                const data = await response.json();
+                return data.data[0];
+            } else {
+                console.error("Failed to retrieve game data.");
+                return null;
+            }
+        }
+
+        function displayNotification(visits) {
+            const notificationsDiv = document.getElementById("notifications");
+            notificationsDiv.innerHTML += `<p class="text-red-500">The game is about to hit 1 billion visits! Current visits: ${visits}</p>`;
+            // Optionally, you can add an alert
+            alert(`The game is about to hit 1 billion visits! Current visits: ${visits}`);
+        }
+
+        async function checkVisits() {
+            const gameData = await getGameData();
+            if (gameData) {
+                const visits = gameData.visits;
+                document.getElementById("current-visits").innerText = `Current Visits: ${visits}`;
+
+                // Check if we need to notify
+                for (const threshold of notificationThresholds) {
+                    if (visits >= threshold && !notifications.has(threshold)) {
+                        displayNotification(visits);
+                        notifications.add(threshold);
+                    }
+                }
+
+                // Exit if the game has reached 1 billion visits
+                if (visits >= 1_000_000_000) {
+                    alert("The game has reached 1 billion visits!");
+                    clearInterval(checkInterval);
+                }
+            }
+        }
+
+        // Check visits every 60 seconds
+        const checkInterval = setInterval(checkVisits, 60000);
+    </script>
+</body>
+</html>
